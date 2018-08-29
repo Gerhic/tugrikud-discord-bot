@@ -1,0 +1,12 @@
+{
+    "name": "tugrik-bot",
+    "version": "0.0.1",
+    "description": "Bot for checking tugriks",
+    "main": "bot.js",
+    "author": "Sixten Leemets",
+    "dependencies": {
+        "discord.io": "https://github.com/woor/discord.io/tarball/gateway_v6",
+        "winston": "^3.0.0",
+        "xmlhttprequest": "^1.8.0"
+    }
+}
