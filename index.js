@@ -139,6 +139,8 @@ bot.on("message", async message => {
     return;
 });
 
+bot.on('error', console.error);
+
 function evalCmd(message, code) {
     if (message.author.id !== config.owner) return;
     try {
