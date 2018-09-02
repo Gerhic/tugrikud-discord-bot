@@ -11,9 +11,7 @@ const bot = new Discord.Client({
 });
 
 var regUsers = {};
-var balDict;
 const regDataFileName = "regData.json";
-const balDataFileName = "balData.json";
 
 var HttpClient = function () {
     this.get = function (aUrl, aCallback) {
@@ -134,11 +132,6 @@ bot.on("message", async message => {
             return;
         }
 
-        else { // if the command doesn't match anything you can say something or just ignore it
-            message.channel.send('<@' + message.author.id + '> type !reg firstname lastname');
-            return;
-        }
-
     } else if (message.content.indexOf("<@" + bot.user.id) === 0 || message.content.indexOf("<@!" + bot.user.id) === 0) { // Catch @Mentions
 
         return message.channel.send(`Use \`${config.prefix}\` to interact with me.`); //help people learn your prefix
@@ -173,9 +166,8 @@ function checkAllBalance() {
         if (response) {
             let src = response.replace(/(?:\r\n|\r|\n|\s)/g, '').toLowerCase();
 
-            balDict = parseSource(src);
-            writeBalDataToDisk();
-            onNewData();
+            onNewData(parseSource(src));
+            writeRegDataToDisk();
         }
     });
 
@@ -194,9 +186,10 @@ function parseSource(src) {
     }
 
     console.log(dict);
+
     return dict;
 }
-function onNewData() {
+function onNewData(balDict) {
     for (var client in regUsers) {
         var val = regUsers[client];
 
@@ -205,7 +198,7 @@ function onNewData() {
                 var prevBal = val.bal;
                 val.bal = balDict[fullName].bal;
 
-                if (prevBal) {
+                if (prevBal != undefined) {
                     if (prevBal != val.bal) {
                         bot.users.get(client).send('Your balance has changed by ' + (prevBal - val.bal.toFixed(2)) + ' and is ' + val.bal.toFixed(2) + '€')
                     }
@@ -217,25 +210,17 @@ function onNewData() {
     }
 }
 function writeRegDataToDisk() {
-    fs.writeFile(regDataFileName, JSON.stringify(regUsers));
-}
-function writeBalDataToDisk() {
-    fs.writeFile(balDataFileName, JSON.stringify(balDict));
+    fs.writeFile(regDataFileName, JSON.stringify(regUsers), (error) => { console.log("Error: writing to disk - " + error) });
 }
 function readDataFromDisk() {
     try {
-        let regFile = fs.readFileSync(regDataFileName, 'utf8')
-        let balFile = fs.readFileSync(balDataFileName, 'utf8')
+        let regFile = fs.readFileSync(regDataFileName, 'utf8');
 
         if (regFile) {
             regUsers = JSON.parse(regFile);
         }
-
-        if (balFile) {
-            balDict = JSON.parse(balFile);
-        }
     } catch (err) {
-
+        console.log("Error: read data from disk - " + err);
     }
 }
 
