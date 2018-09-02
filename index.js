@@ -11,8 +11,9 @@ const bot = new Discord.Client({
 });
 
 var regUsers = {};
-var dataDict;
-const dataFileName = "data.json";
+var balDict;
+const regDataFileName = "regData.json";
+const balDataFileName = "balData.json";
 
 var HttpClient = function () {
     this.get = function (aUrl, aCallback) {
@@ -59,7 +60,7 @@ bot.on("message", async message => {
             args.splice(-1, 1);
             regUsers[userId].firstName = args.join(" ");
 
-            writeRegUsersToDisk();
+            writeRegDataToDisk();
 
             message.channel.send('I will PM you when balance changes for ' + regUsers[userId].firstName + " " + regUsers[userId].lastName);
 
@@ -124,7 +125,7 @@ bot.on("message", async message => {
             args.splice(-1, 1);
             regUsers[userId].firstName = args.join(" ");
 
-            writeRegUsersToDisk();
+            writeRegDataToDisk();
 
             message.channel.send('I will PM you when balance changes for ' + regUsers[userId].firstName + " " + regUsers[userId].lastName + ' <@' + message.author.id + '>');
 
@@ -172,7 +173,8 @@ function checkAllBalance() {
         if (response) {
             let src = response.replace(/(?:\r\n|\r|\n|\s)/g, '').toLowerCase();
 
-            dataDict = parseSource(src);
+            balDict = parseSource(src);
+            writeBalDataToDisk();
             onNewData();
         }
     });
@@ -198,10 +200,10 @@ function onNewData() {
     for (var client in regUsers) {
         var val = regUsers[client];
 
-        for (var fullName in dataDict) {
+        for (var fullName in balDict) {
             if (fullName.includes(val.firstName) && fullName.includes(val.lastName)) {
                 var prevBal = val.bal;
-                val.bal = dataDict[fullName].bal;
+                val.bal = balDict[fullName].bal;
 
                 if (prevBal) {
                     if (prevBal != val.bal) {
@@ -214,15 +216,23 @@ function onNewData() {
         }
     }
 }
-function writeRegUsersToDisk() {
-    fs.writeFile(dataFileName, JSON.stringify(regUsers));
+function writeRegDataToDisk() {
+    fs.writeFile(regDataFileName, JSON.stringify(regUsers));
 }
-function readRegUsersFromDisk() {
+function writeBalDataToDisk() {
+    fs.writeFile(balDataFileName, JSON.stringify(balDict));
+}
+function readDataFromDisk() {
     try {
-        let file = fs.readFileSync(dataFileName, 'utf8')
+        let regFile = fs.readFileSync(regDataFileName, 'utf8')
+        let balFile = fs.readFileSync(balDataFileName, 'utf8')
 
-        if (file) {
-            regUsers = JSON.parse(file);
+        if (regFile) {
+            regUsers = JSON.parse(regFile);
+        }
+
+        if (balFile) {
+            balDict = JSON.parse(balFile);
         }
     } catch (err) {
 
@@ -242,8 +252,8 @@ process.on('unhandledRejection', err => {
 });
 
 bot.login(config.token);
-readRegUsersFromDisk();
+readDataFromDisk();
 
-schedule.scheduleJob('0 0 23 * *', () => { 
+schedule.scheduleJob('0 0 23 * *', () => {
     checkAllBalance();
 })
