@@ -58,5 +58,3 @@ typings/
 .env
 
 config.json
-regData.json
-balData.json
